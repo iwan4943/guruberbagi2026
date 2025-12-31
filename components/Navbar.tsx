@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
-import { Search, LogOut, LogIn, LayoutDashboard, ArrowLeft } from 'lucide-react';
+import { Search, LogOut, User as UserIcon, LogIn, LayoutDashboard, ArrowLeft } from 'lucide-react';
 import { User } from '../types';
-import { COLORS, SHADOWS, RADIUS } from '../constants';
 
 interface NavbarProps {
   user: User;
@@ -22,196 +21,70 @@ export const Navbar: React.FC<NavbarProps> = ({ user, onLogin, onLogout, onSearc
 
   const isAdmin = user.role === 'ADMIN' || user.role === 'MODERATOR';
 
-  const styles = {
-    nav: {
-      position: 'sticky' as const,
-      top: 0,
-      zIndex: 40,
-      backgroundColor: COLORS.white,
-      borderBottom: `1px solid ${COLORS.slate200}`,
-      boxShadow: SHADOWS.sm,
-    },
-    container: {
-      maxWidth: '1200px',
-      margin: '0 auto',
-      padding: '12px 16px',
-      display: 'flex',
-      flexWrap: 'wrap' as const,
-      gap: '16px',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-    },
-    brand: {
-      display: 'flex',
-      alignItems: 'center',
-      gap: '12px',
-    },
-    brandText: {
-      display: 'flex',
-      flexDirection: 'column' as const,
-      lineHeight: 1.1,
-    },
-    brandTitle: {
-      fontWeight: 800,
-      color: COLORS.primary,
-      fontSize: '1.25rem',
-      letterSpacing: '-0.025em',
-    },
-    brandSubtitle: {
-      fontWeight: 600,
-      color: COLORS.slate500,
-      fontSize: '0.7rem',
-      textTransform: 'uppercase' as const,
-      letterSpacing: '0.05em',
-    },
-    searchContainer: {
-      flex: 1,
-      maxWidth: '450px',
-      display: 'flex',
-      alignItems: 'center',
-      backgroundColor: COLORS.white,
-      border: `1px solid ${COLORS.slate200}`,
-      borderRadius: RADIUS.full,
-      padding: '8px 16px',
-      boxShadow: SHADOWS.sm,
-    },
-    input: {
-      width: '100%',
-      backgroundColor: 'transparent',
-      border: 'none',
-      outline: 'none',
-      fontSize: '0.875rem',
-      fontWeight: 600,
-      color: COLORS.slate700,
-    },
-    actions: {
-      display: 'flex',
-      alignItems: 'center',
-      gap: '12px',
-    },
-    btnAdmin: {
-      display: 'flex',
-      alignItems: 'center',
-      gap: '8px',
-      padding: '6px 16px',
-      fontSize: '0.875rem',
-      fontWeight: 700,
-      color: '#78350f', // amber-900
-      backgroundColor: '#fbbf24', // amber-400
-      border: 'none',
-      borderRadius: RADIUS.full,
-      cursor: 'pointer'
-    },
-    btnBack: {
-      display: 'flex',
-      alignItems: 'center',
-      gap: '8px',
-      padding: '6px 16px',
-      fontSize: '0.875rem',
-      fontWeight: 700,
-      color: COLORS.slate600,
-      border: `1px solid ${COLORS.slate300}`,
-      backgroundColor: 'white',
-      borderRadius: RADIUS.full,
-      cursor: 'pointer'
-    },
-    btnLogin: {
-      display: 'flex',
-      alignItems: 'center',
-      gap: '8px',
-      padding: '6px 20px',
-      fontSize: '0.875rem',
-      fontWeight: 700,
-      color: COLORS.primary,
-      border: `1px solid ${COLORS.primary}`,
-      backgroundColor: 'transparent',
-      borderRadius: RADIUS.full,
-      cursor: 'pointer'
-    },
-    userSection: {
-      display: 'flex',
-      alignItems: 'center',
-      gap: '12px',
-      paddingLeft: '8px',
-      borderLeft: `1px solid ${COLORS.slate200}`,
-    },
-    userInfo: {
-      textAlign: 'right' as const,
-    },
-    badge: {
-        fontSize: '0.6rem',
-        fontWeight: 700,
-        color: COLORS.slate500,
-        backgroundColor: COLORS.slate100,
-        padding: '2px 8px',
-        borderRadius: RADIUS.full,
-        display: 'inline-block'
-    },
-    btnLogout: {
-        width: '32px',
-        height: '32px',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        borderRadius: RADIUS.full,
-        backgroundColor: COLORS.red50,
-        color: COLORS.red500,
-        border: '1px solid #fee2e2',
-        cursor: 'pointer'
-    }
-  };
-
   return (
-    <nav style={styles.nav}>
-      <div style={styles.container}>
+    <nav className="sticky top-0 z-40 bg-white border-b border-slate-200 shadow-sm">
+      <div className="container mx-auto px-4 py-3 flex flex-col md:flex-row gap-4 items-center justify-between">
         {/* Brand */}
-        <div style={styles.brand}>
-           <img src="https://i.imgur.com/kNgOisY.png" alt="Logo" style={{ height: '48px' }} />
-           <div style={styles.brandText}>
-             <span style={styles.brandTitle}>GURU BERBAGI</span>
-             <span style={styles.brandSubtitle}>Korwilcambidik Kecamatan Selogiri</span>
+        <div className="flex items-center gap-3 self-start md:self-auto">
+           <img src="https://i.imgur.com/kNgOisY.png" alt="Logo" className="h-[48px]" />
+           <div className="flex flex-col leading-tight">
+             <span className="font-extrabold text-primary text-xl tracking-tight">GURU BERBAGI</span>
+             <span className="font-semibold text-slate-500 text-[0.7rem] uppercase tracking-wide">Korwilcambidik Kecamatan Selogiri</span>
            </div>
         </div>
 
         {/* Search Bar - Only in Gallery View */}
-        {currentView === 'GALLERY' ? (
-          <div style={styles.searchContainer}>
-            <Search size={18} color={COLORS.slate400} style={{ marginRight: '12px' }} />
+        {currentView === 'GALLERY' && (
+          <div className="flex items-center w-full max-w-md bg-white border border-slate-200 rounded-full px-4 py-2 shadow-sm focus-within:ring-2 focus-within:ring-primary/20 transition-all">
+            <Search size={18} className="text-slate-400 mr-3" />
             <input 
               type="text" 
-              style={styles.input}
+              className="w-full bg-transparent border-none outline-none text-sm font-semibold text-slate-700 placeholder:font-medium placeholder:text-slate-400"
               placeholder="Cari karya, mapel, guru..."
               value={searchValue}
               onChange={handleInput}
             />
           </div>
-        ) : <div style={{ flex: 1 }}></div>}
+        )}
 
         {/* Actions */}
-        <div style={styles.actions}>
+        <div className="flex items-center gap-3 self-end md:self-auto">
           {currentView === 'ADMIN' ? (
-             <button onClick={() => onChangeView('GALLERY')} style={styles.btnBack}>
+             <button 
+                onClick={() => onChangeView('GALLERY')}
+                className="flex items-center gap-2 px-4 py-1.5 text-sm font-bold text-slate-600 border border-slate-300 rounded-full hover:bg-slate-50 transition-colors"
+             >
                 <ArrowLeft size={16} /> Kembali
              </button>
           ) : (
              isAdmin && (
-              <button onClick={() => onChangeView('ADMIN')} style={styles.btnAdmin}>
+              <button 
+                onClick={() => onChangeView('ADMIN')}
+                className="flex items-center gap-2 px-4 py-1.5 text-sm font-bold text-amber-900 bg-amber-400 rounded-full hover:bg-amber-500 transition-colors shadow-sm"
+              >
                 <LayoutDashboard size={16} /> Dashboard
               </button>
              )
           )}
 
           {user.role === 'GUEST' ? (
-            <button onClick={onLogin} style={styles.btnLogin}>
+            <button 
+              onClick={onLogin}
+              className="flex items-center gap-2 px-5 py-1.5 text-sm font-bold text-primary border border-primary rounded-full hover:bg-primary hover:text-white transition-all shadow-sm"
+            >
               <LogIn size={16} /> Login Guru
             </button>
           ) : (
-            <div style={styles.userSection}>
-               <div style={styles.userInfo}>
-                 <div style={{ fontSize: '0.75rem', fontWeight: 700, color: COLORS.slate800 }}>{user.name}</div>
-                 <div style={styles.badge}>{user.role}</div>
+            <div className="flex items-center gap-3 pl-2 border-l border-slate-200">
+               <div className="text-right hidden sm:block">
+                 <div className="text-xs font-bold text-slate-800">{user.name}</div>
+                 <div className="text-[0.6rem] font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full inline-block">{user.role}</div>
                </div>
-               <button onClick={onLogout} style={styles.btnLogout} title="Logout">
+               <button 
+                 onClick={onLogout}
+                 className="w-8 h-8 flex items-center justify-center rounded-full bg-red-50 text-red-500 hover:bg-red-500 hover:text-white transition-colors border border-red-100"
+                 title="Logout"
+               >
                  <LogOut size={14} />
                </button>
             </div>

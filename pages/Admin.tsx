@@ -3,7 +3,6 @@ import { MediaItem, User, TeacherStat, SchoolStat } from '../types';
 import { apiService } from '../services/apiService';
 import { Layers, CheckCircle2, Clock, Users, Trash2, Edit, Award } from 'lucide-react';
 import Swal from 'sweetalert2';
-import { COLORS, SHADOWS, RADIUS } from '../constants';
 
 interface AdminProps {
     data: MediaItem[];
@@ -13,15 +12,7 @@ interface AdminProps {
 
 export const Admin: React.FC<AdminProps> = ({ data, user, refreshData }) => {
     const [activeTab, setActiveTab] = useState<'KURASI' | 'USERS' | 'RANK_SCHOOL' | 'RANK_TEACHER'>('KURASI');
-    const [usersList, setUsersList] = useState<any[]>([]); 
-    const [windowWidth, setWindowWidth] = useState(window.innerWidth);
-
-    useEffect(() => {
-        const handleResize = () => setWindowWidth(window.innerWidth);
-        window.addEventListener('resize', handleResize);
-        if (user.role === 'ADMIN') apiService.fetchUsers().then(setUsersList);
-        return () => window.removeEventListener('resize', handleResize);
-    }, [user]);
+    const [usersList, setUsersList] = useState<any[]>([]); // Raw user arrays for simplicity or map them
 
     // Stats
     const stats = useMemo(() => ({
@@ -30,21 +21,33 @@ export const Admin: React.FC<AdminProps> = ({ data, user, refreshData }) => {
         pending: data.filter(i => i.status === 'BARU').length,
     }), [data]);
 
+    // Load users on mount if admin
+    useEffect(() => {
+        if (user.role === 'ADMIN') {
+            apiService.fetchUsers().then(setUsersList);
+        }
+    }, [user]);
+
     // Derived Rankings
     const { schoolStats, teacherStats } = useMemo(() => {
         const tStats: Record<string, TeacherStat> = {};
         const sStats: Record<string, { teachers: Set<string>, count: number }> = {};
 
         data.forEach(item => {
-            if (!tStats[item.author]) tStats[item.author] = { name: item.author, school: item.school, count: 0 };
+            // Teacher Stats
+            if (!tStats[item.author]) {
+                tStats[item.author] = { name: item.author, school: item.school, count: 0 };
+            }
             tStats[item.author].count++;
 
+            // School Stats
             const sName = item.school || "Tanpa Sekolah";
             if (!sStats[sName]) sStats[sName] = { teachers: new Set(), count: 0 };
             sStats[sName].count++;
             sStats[sName].teachers.add(item.author);
         });
 
+        // Also add users to school stats who haven't posted yet
         usersList.forEach(u => {
             const sName = u[1] || "Tanpa Sekolah";
             if (!sStats[sName]) sStats[sName] = { teachers: new Set(), count: 0 };
@@ -59,6 +62,7 @@ export const Admin: React.FC<AdminProps> = ({ data, user, refreshData }) => {
         })).sort((a,b) => b.mediaCount - a.mediaCount);
 
         const tResult: TeacherStat[] = Object.values(tStats).sort((a,b) => b.count - a.count);
+
         return { schoolStats: sResult, teacherStats: tResult };
     }, [data, usersList]);
 
@@ -67,17 +71,14 @@ export const Admin: React.FC<AdminProps> = ({ data, user, refreshData }) => {
         Swal.fire({
             title: 'Kurasi Karya',
             html: `
-                <div style="text-align:left; margin-bottom: 8px; font-weight:bold; font-size:0.8rem; color:#64748b;">STATUS</div>
-                <select id="swal-status" style="width:100%; padding:10px; border:1px solid #cbd5e1; border-radius:8px; margin-bottom:16px;">
+                <select id="swal-status" class="w-full p-2 border rounded mb-3">
                     <option value="BARU" ${item.status === 'BARU' ? 'selected' : ''}>BARU (Pending)</option>
                     <option value="DISETUJUI" ${item.status === 'DISETUJUI' ? 'selected' : ''}>DISETUJUI (Tampil)</option>
                     <option value="REVISI" ${item.status === 'REVISI' ? 'selected' : ''}>REVISI</option>
                 </select>
-                <div style="text-align:left; margin-bottom: 8px; font-weight:bold; font-size:0.8rem; color:#64748b;">FEEDBACK</div>
-                <textarea id="swal-feedback" style="width:100%; padding:10px; border:1px solid #cbd5e1; border-radius:8px; min-height:80px;" placeholder="Catatan...">${item.feedback || ''}</textarea>
+                <textarea id="swal-feedback" class="w-full p-2 border rounded" placeholder="Catatan...">${item.feedback || ''}</textarea>
             `,
             showCancelButton: true,
-            confirmButtonColor: COLORS.primary,
             preConfirm: () => {
                 const status = (document.getElementById('swal-status') as HTMLSelectElement).value;
                 const feedback = (document.getElementById('swal-feedback') as HTMLTextAreaElement).value;
@@ -96,16 +97,15 @@ export const Admin: React.FC<AdminProps> = ({ data, user, refreshData }) => {
         Swal.fire({
             title: 'Tambah Guru',
             html: `
-                <input id="u-name" style="width:100%; padding:10px; margin-bottom:10px; border:1px solid #cbd5e1; border-radius:8px;" placeholder="Nama Lengkap">
-                <input id="u-school" style="width:100%; padding:10px; margin-bottom:10px; border:1px solid #cbd5e1; border-radius:8px;" placeholder="Unit Kerja">
-                <input id="u-pin" style="width:100%; padding:10px; margin-bottom:10px; border:1px solid #cbd5e1; border-radius:8px;" placeholder="PIN Login">
-                <select id="u-role" style="width:100%; padding:10px; border:1px solid #cbd5e1; border-radius:8px;">
+                <input id="u-name" class="swal2-input" placeholder="Nama Lengkap">
+                <input id="u-school" class="swal2-input" placeholder="Unit Kerja">
+                <input id="u-pin" class="swal2-input" placeholder="PIN Login">
+                <select id="u-role" class="swal2-input">
                     <option value="GURU">GURU</option>
                     <option value="MODERATOR">MODERATOR</option>
                     <option value="ADMIN">ADMIN</option>
                 </select>
             `,
-            confirmButtonColor: COLORS.primary,
             preConfirm: () => {
                  return {
                     nama: (document.getElementById('u-name') as HTMLInputElement).value,
@@ -124,123 +124,36 @@ export const Admin: React.FC<AdminProps> = ({ data, user, refreshData }) => {
         });
     };
 
-    const styles = {
-        container: { maxWidth: '1200px', margin: '0 auto', padding: '32px 16px' },
-        header: { marginBottom: '32px' },
-        title: { fontSize: '1.5rem', fontWeight: 800, color: COLORS.slate800, margin: 0 },
-        subtitle: { fontSize: '0.875rem', color: COLORS.slate500, marginTop: '4px' },
-        statsGrid: {
-            display: 'flex',
-            flexWrap: 'wrap' as const,
-            gap: '16px',
-            marginBottom: '32px',
-        },
-        statCard: (from: string, to: string, shadow: string) => ({
-            flex: '1 1 200px',
-            padding: '24px',
-            borderRadius: '16px',
-            background: `linear-gradient(135deg, ${from}, ${to})`,
-            color: 'white',
-            boxShadow: `0 10px 15px -3px ${shadow}`,
-        }),
-        statVal: { fontSize: '2.25rem', fontWeight: 800, lineHeight: 1, marginBottom: '4px' },
-        statLabel: { fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase' as const, opacity: 0.9, display: 'flex', alignItems: 'center', gap: '8px' },
-        
-        tabNav: {
-            backgroundColor: 'white',
-            borderRadius: '16px',
-            border: `1px solid ${COLORS.slate200}`,
-            boxShadow: SHADOWS.sm,
-            overflow: 'hidden',
-            marginBottom: '24px',
-        },
-        tabHeader: {
-            display: 'flex',
-            borderBottom: `1px solid ${COLORS.slate100}`,
-            overflowX: 'auto' as const,
-        },
-        tabBtn: (active: boolean) => ({
-            padding: '16px 24px',
-            fontSize: '0.875rem',
-            fontWeight: 700,
-            whiteSpace: 'nowrap' as const,
-            border: 'none',
-            backgroundColor: active ? '#f0fdf4' : 'transparent',
-            color: active ? COLORS.primary : COLORS.slate500,
-            borderBottom: active ? `2px solid ${COLORS.primary}` : 'none',
-            cursor: 'pointer',
-        }),
-        content: {
-            padding: '24px',
-            overflowX: 'auto' as const,
-        },
-        table: {
-            width: '100%',
-            borderCollapse: 'collapse' as const,
-            fontSize: '0.875rem',
-        },
-        th: {
-            textAlign: 'left' as const,
-            padding: '12px 8px',
-            fontSize: '0.75rem',
-            fontWeight: 800,
-            color: COLORS.slate400,
-            textTransform: 'uppercase' as const,
-            borderBottom: `1px solid ${COLORS.slate200}`,
-        },
-        td: {
-            padding: '12px 8px',
-            borderBottom: `1px solid ${COLORS.slate50}`,
-            verticalAlign: 'middle',
-        },
-        actionBtn: (color: string) => ({
-            padding: '6px',
-            borderRadius: '6px',
-            border: 'none',
-            backgroundColor: 'transparent',
-            color: color,
-            cursor: 'pointer',
-        }),
-        statusBadge: (status: string) => ({
-            padding: '2px 8px',
-            borderRadius: '4px',
-            fontSize: '0.65rem',
-            fontWeight: 800,
-            backgroundColor: status === 'DISETUJUI' ? '#d1fae5' : (status === 'REVISI' ? '#fee2e2' : '#fef3c7'),
-            color: status === 'DISETUJUI' ? '#047857' : (status === 'REVISI' ? '#b91c1c' : '#b45309'),
-        })
-    };
-
     return (
-        <div style={styles.container}>
-            <div style={styles.header}>
-                <h1 style={styles.title}>Dashboard Admin</h1>
-                <p style={styles.subtitle}>Kelola data dan pantau aktivitas guru.</p>
+        <div className="container mx-auto px-4 py-8">
+            <div className="mb-8">
+                <h1 className="text-2xl font-extrabold text-slate-800">Dashboard Admin</h1>
+                <p className="text-slate-500 text-sm">Kelola data dan pantau aktivitas guru.</p>
             </div>
 
             {/* Stats Cards */}
-            <div style={styles.statsGrid}>
-                <div style={styles.statCard('#3b82f6', '#2563eb', 'rgba(59, 130, 246, 0.3)')}>
-                    <div style={styles.statVal}>{stats.total}</div>
-                    <div style={styles.statLabel}><Layers size={14}/> Total Karya</div>
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+                <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl p-6 text-white shadow-lg shadow-blue-200">
+                    <div className="text-4xl font-extrabold mb-1">{stats.total}</div>
+                    <div className="text-xs font-bold uppercase tracking-wider opacity-80 flex items-center gap-2"><Layers size={14}/> Total Karya</div>
                 </div>
-                <div style={styles.statCard('#10b981', '#059669', 'rgba(16, 185, 129, 0.3)')}>
-                    <div style={styles.statVal}>{stats.approved}</div>
-                    <div style={styles.statLabel}><CheckCircle2 size={14}/> Disetujui</div>
+                <div className="bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-2xl p-6 text-white shadow-lg shadow-emerald-200">
+                    <div className="text-4xl font-extrabold mb-1">{stats.approved}</div>
+                    <div className="text-xs font-bold uppercase tracking-wider opacity-80 flex items-center gap-2"><CheckCircle2 size={14}/> Disetujui</div>
                 </div>
-                <div style={styles.statCard('#fbbf24', '#f59e0b', 'rgba(251, 191, 36, 0.3)')}>
-                    <div style={styles.statVal}>{stats.pending}</div>
-                    <div style={styles.statLabel}><Clock size={14}/> Menunggu</div>
+                <div className="bg-gradient-to-br from-amber-400 to-amber-500 rounded-2xl p-6 text-white shadow-lg shadow-amber-200">
+                    <div className="text-4xl font-extrabold mb-1">{stats.pending}</div>
+                    <div className="text-xs font-bold uppercase tracking-wider opacity-80 flex items-center gap-2"><Clock size={14}/> Menunggu</div>
                 </div>
-                <div style={styles.statCard('#64748b', '#475569', 'rgba(100, 116, 139, 0.3)')}>
-                    <div style={styles.statVal}>{usersList.length}</div>
-                    <div style={styles.statLabel}><Users size={14}/> Guru Terdaftar</div>
+                <div className="bg-gradient-to-br from-slate-600 to-slate-700 rounded-2xl p-6 text-white shadow-lg shadow-slate-300">
+                    <div className="text-4xl font-extrabold mb-1">{usersList.length}</div>
+                    <div className="text-xs font-bold uppercase tracking-wider opacity-80 flex items-center gap-2"><Users size={14}/> Guru Terdaftar</div>
                 </div>
             </div>
 
             {/* Navigation */}
-            <div style={styles.tabNav}>
-                <div style={styles.tabHeader}>
+            <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden mb-6">
+                <div className="flex border-b border-slate-100 overflow-x-auto">
                     {[
                         { id: 'KURASI', label: 'Kurasi Karya' },
                         { id: 'USERS', label: 'Data Guru', role: 'ADMIN' },
@@ -252,7 +165,7 @@ export const Admin: React.FC<AdminProps> = ({ data, user, refreshData }) => {
                             <button 
                                 key={tab.id}
                                 onClick={() => setActiveTab(tab.id as any)}
-                                style={styles.tabBtn(activeTab === tab.id)}
+                                className={`px-6 py-4 text-sm font-bold whitespace-nowrap transition-colors ${activeTab === tab.id ? 'text-primary border-b-2 border-primary bg-teal-50/50' : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50'}`}
                             >
                                 {tab.label}
                             </button>
@@ -260,34 +173,39 @@ export const Admin: React.FC<AdminProps> = ({ data, user, refreshData }) => {
                     })}
                 </div>
 
-                <div style={styles.content}>
+                <div className="p-6 overflow-x-auto">
+                    {/* Content */}
                     {activeTab === 'KURASI' && (
-                        <table style={styles.table}>
+                        <table className="w-full text-left border-collapse">
                             <thead>
-                                <tr>
-                                    <th style={styles.th}>Info Karya</th>
-                                    <th style={styles.th}>Guru</th>
-                                    <th style={{...styles.th, textAlign: 'center'}}>Status</th>
-                                    <th style={{...styles.th, textAlign: 'center'}}>Aksi</th>
+                                <tr className="text-xs font-extrabold text-slate-400 uppercase border-b border-slate-200">
+                                    <th className="pb-3 pl-2">Info Karya</th>
+                                    <th className="pb-3">Guru</th>
+                                    <th className="pb-3 text-center">Status</th>
+                                    <th className="pb-3 text-center">Aksi</th>
                                 </tr>
                             </thead>
-                            <tbody>
+                            <tbody className="text-sm">
                                 {data.map(item => (
-                                    <tr key={item.id} style={{ borderBottom: `1px solid ${COLORS.slate50}` }}>
-                                        <td style={styles.td}>
-                                            <div style={{ fontWeight: 700, color: COLORS.slate800 }}>{item.title}</div>
-                                            <div style={{ fontSize: '0.75rem', color: COLORS.slate500 }}>{item.type}</div>
+                                    <tr key={item.id} className="border-b border-slate-50 hover:bg-slate-50/50">
+                                        <td className="py-3 pl-2">
+                                            <div className="font-bold text-slate-800">{item.title}</div>
+                                            <div className="text-xs text-slate-500">{item.type}</div>
                                         </td>
-                                        <td style={styles.td}>
-                                            <div style={{ fontWeight: 700, color: COLORS.slate700 }}>{item.author}</div>
-                                            <div style={{ fontSize: '0.75rem', color: COLORS.slate500 }}>{item.school}</div>
+                                        <td className="py-3">
+                                            <div className="font-bold text-slate-700">{item.author}</div>
+                                            <div className="text-xs text-slate-500">{item.school}</div>
                                         </td>
-                                        <td style={{...styles.td, textAlign: 'center'}}>
-                                            <span style={styles.statusBadge(item.status)}>{item.status}</span>
+                                        <td className="py-3 text-center">
+                                            <span className={`px-2 py-1 rounded text-[10px] font-extrabold ${item.status === 'DISETUJUI' ? 'bg-emerald-100 text-emerald-700' : (item.status === 'REVISI' ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-700')}`}>
+                                                {item.status}
+                                            </span>
                                         </td>
-                                        <td style={{...styles.td, textAlign: 'center'}}>
-                                            <button onClick={() => handleKurasi(item)} style={styles.actionBtn(COLORS.primary)}><Edit size={16}/></button>
-                                            <button onClick={() => apiService.deleteMedia(item.id).then(refreshData)} style={styles.actionBtn(COLORS.red500)}><Trash2 size={16}/></button>
+                                        <td className="py-3 text-center">
+                                            <div className="flex justify-center gap-2">
+                                                <button onClick={() => handleKurasi(item)} className="p-1.5 rounded hover:bg-blue-100 text-blue-600"><Edit size={16}/></button>
+                                                <button onClick={() => apiService.deleteMedia(item.id).then(refreshData)} className="p-1.5 rounded hover:bg-red-100 text-red-600"><Trash2 size={16}/></button>
+                                            </div>
                                         </td>
                                     </tr>
                                 ))}
@@ -297,26 +215,26 @@ export const Admin: React.FC<AdminProps> = ({ data, user, refreshData }) => {
 
                     {activeTab === 'USERS' && (
                         <div>
-                             <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '16px' }}>
-                                 <button onClick={handleAddUser} style={{ backgroundColor: COLORS.primary, color: 'white', fontWeight: 700, fontSize: '0.75rem', padding: '8px 16px', borderRadius: RADIUS.full, border: 'none', cursor: 'pointer' }}>
+                             <div className="flex justify-end mb-4">
+                                 <button onClick={handleAddUser} className="bg-primary text-white text-xs font-bold px-4 py-2 rounded-full hover:bg-primary-dark">
                                      + Tambah Guru
                                  </button>
                              </div>
-                             <table style={styles.table}>
-                                <thead>
-                                    <tr><th style={styles.th}>Nama</th><th style={styles.th}>PIN</th><th style={styles.th}>Role</th><th style={{...styles.th, textAlign: 'center'}}>Aksi</th></tr>
+                             <table className="w-full text-left">
+                                <thead className="text-xs font-extrabold text-slate-400 uppercase border-b">
+                                    <tr><th className="pb-3 pl-2">Nama</th><th className="pb-3">PIN</th><th className="pb-3">Role</th><th className="pb-3 text-center">Aksi</th></tr>
                                 </thead>
-                                <tbody>
+                                <tbody className="text-sm">
                                     {usersList.map((u, i) => (
-                                        <tr key={i}>
-                                            <td style={styles.td}>
-                                                <div style={{ fontWeight: 700 }}>{u[0]}</div>
-                                                <div style={{ fontSize: '0.75rem', color: COLORS.slate500 }}>{u[1]}</div>
+                                        <tr key={i} className="border-b border-slate-50 hover:bg-slate-50">
+                                            <td className="py-3 pl-2">
+                                                <div className="font-bold">{u[0]}</div>
+                                                <div className="text-xs text-slate-500">{u[1]}</div>
                                             </td>
-                                            <td style={{...styles.td, fontFamily: 'monospace', color: COLORS.slate500 }}>{u[2]}</td>
-                                            <td style={styles.td}><span style={{ backgroundColor: COLORS.slate100, padding: '2px 8px', borderRadius: '4px', fontSize: '0.75rem', fontWeight: 700 }}>{u[3]}</span></td>
-                                            <td style={{...styles.td, textAlign: 'center'}}>
-                                                <button onClick={() => apiService.deleteUser(u[2]).then(() => apiService.fetchUsers().then(setUsersList))} style={styles.actionBtn(COLORS.red500)}><Trash2 size={16}/></button>
+                                            <td className="py-3 font-mono text-slate-500">{u[2]}</td>
+                                            <td className="py-3"><span className="bg-slate-100 px-2 py-0.5 rounded text-xs font-bold">{u[3]}</span></td>
+                                            <td className="py-3 text-center">
+                                                <button onClick={() => apiService.deleteUser(u[2]).then(() => apiService.fetchUsers().then(setUsersList))} className="text-red-500 hover:text-red-700"><Trash2 size={16}/></button>
                                             </td>
                                         </tr>
                                     ))}
@@ -326,20 +244,20 @@ export const Admin: React.FC<AdminProps> = ({ data, user, refreshData }) => {
                     )}
 
                     {activeTab === 'RANK_SCHOOL' && (
-                        <table style={styles.table}>
-                           <thead>
-                               <tr><th style={{...styles.th, textAlign: 'center', width: '40px'}}>#</th><th style={styles.th}>Satuan Pendidikan</th><th style={{...styles.th, textAlign: 'center'}}>Guru</th><th style={{...styles.th, textAlign: 'center'}}>Karya</th><th style={{...styles.th, textAlign: 'center'}}>Progress</th></tr>
+                        <table className="w-full text-left">
+                           <thead className="text-xs font-extrabold text-slate-400 uppercase border-b">
+                               <tr><th className="pb-3 w-10 text-center">#</th><th className="pb-3">Satuan Pendidikan</th><th className="pb-3 text-center">Guru</th><th className="pb-3 text-center">Karya</th><th className="pb-3 text-center">Progress</th></tr>
                            </thead>
-                           <tbody>
+                           <tbody className="text-sm">
                                {schoolStats.map((s, i) => (
-                                   <tr key={i}>
-                                       <td style={{...styles.td, textAlign: 'center', fontWeight: 700, color: COLORS.slate400 }}>{i+1}</td>
-                                       <td style={{...styles.td, fontWeight: 700, color: COLORS.slate800 }}>{s.name}</td>
-                                       <td style={{...styles.td, textAlign: 'center'}}><span style={{ backgroundColor: '#eff6ff', color: '#1d4ed8', fontWeight: 700, padding: '2px 8px', borderRadius: '4px' }}>{s.teacherCount}</span></td>
-                                       <td style={{...styles.td, textAlign: 'center'}}><span style={{ backgroundColor: '#f0fdf4', color: '#15803d', fontWeight: 700, padding: '2px 8px', borderRadius: '4px' }}>{s.mediaCount}</span></td>
-                                       <td style={{...styles.td, width: '25%'}}>
-                                           <div style={{ width: '100%', backgroundColor: COLORS.slate100, borderRadius: '999px', height: '6px', overflow: 'hidden' }}>
-                                               <div style={{ backgroundColor: COLORS.primary, height: '100%', width: `${s.percentage}%` }}></div>
+                                   <tr key={i} className="border-b border-slate-50 hover:bg-slate-50">
+                                       <td className="py-3 text-center font-bold text-slate-400">{i+1}</td>
+                                       <td className="py-3 font-bold text-slate-800">{s.name}</td>
+                                       <td className="py-3 text-center"><span className="bg-blue-50 text-blue-700 font-bold px-2 py-1 rounded">{s.teacherCount}</span></td>
+                                       <td className="py-3 text-center"><span className="bg-teal-50 text-teal-700 font-bold px-2 py-1 rounded">{s.mediaCount}</span></td>
+                                       <td className="py-3 align-middle w-1/4">
+                                           <div className="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
+                                               <div className="bg-primary h-full" style={{width: `${s.percentage}%`}}></div>
                                            </div>
                                        </td>
                                    </tr>
@@ -349,24 +267,22 @@ export const Admin: React.FC<AdminProps> = ({ data, user, refreshData }) => {
                     )}
                     
                     {activeTab === 'RANK_TEACHER' && (
-                         <table style={styles.table}>
-                            <thead>
-                                <tr><th style={{...styles.th, textAlign: 'center', width: '40px'}}>#</th><th style={styles.th}>Nama Guru</th><th style={styles.th}>Sekolah</th><th style={{...styles.th, textAlign: 'center'}}>Total Karya</th></tr>
+                         <table className="w-full text-left">
+                            <thead className="text-xs font-extrabold text-slate-400 uppercase border-b">
+                                <tr><th className="pb-3 w-10 text-center">#</th><th className="pb-3">Nama Guru</th><th className="pb-3">Sekolah</th><th className="pb-3 text-center">Total Karya</th></tr>
                             </thead>
-                            <tbody>
+                            <tbody className="text-sm">
                                 {teacherStats.slice(0, 100).map((t, i) => (
-                                    <tr key={i}>
-                                        <td style={{...styles.td, textAlign: 'center'}}>
-                                            {i < 3 ? <div style={{ width: '24px', height: '24px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontSize: '0.75rem', fontWeight: 700, margin: '0 auto', backgroundColor: i===0?'#facc15':i===1?'#94a3b8':'#fb923c' }}>{i+1}</div> : <span style={{ color: COLORS.slate400, fontWeight: 700 }}>{i+1}</span>}
+                                    <tr key={i} className="border-b border-slate-50 hover:bg-slate-50">
+                                        <td className="py-3 text-center">
+                                            {i < 3 ? <div className={`w-6 h-6 rounded-full flex items-center justify-center text-white text-xs font-bold mx-auto ${i===0?'bg-yellow-400':i===1?'bg-slate-400':'bg-orange-400'}`}>{i+1}</div> : <span className="text-slate-400 font-bold">{i+1}</span>}
                                         </td>
-                                        <td style={{...styles.td, fontWeight: 700, color: COLORS.slate800 }}>
-                                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                                {t.name}
-                                                {i < 3 && <Award size={14} color="#f59e0b" />}
-                                            </div>
+                                        <td className="py-3 font-bold text-slate-800 flex items-center gap-2">
+                                            {t.name}
+                                            {i < 3 && <Award size={14} className="text-amber-500" />}
                                         </td>
-                                        <td style={{...styles.td, fontSize: '0.75rem', color: COLORS.slate500, fontWeight: 700 }}>{t.school}</td>
-                                        <td style={{...styles.td, textAlign: 'center'}}><span style={{ backgroundColor: '#f0fdf4', color: '#15803d', fontWeight: 700, padding: '4px 12px', borderRadius: RADIUS.full }}>{t.count}</span></td>
+                                        <td className="py-3 text-xs text-slate-500 font-bold">{t.school}</td>
+                                        <td className="py-3 text-center"><span className="bg-teal-50 text-teal-700 font-bold px-3 py-1 rounded-full">{t.count}</span></td>
                                     </tr>
                                 ))}
                             </tbody>

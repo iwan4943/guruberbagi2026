@@ -4,7 +4,7 @@ import { Gallery } from './pages/Gallery';
 import { Admin } from './pages/Admin';
 import { apiService } from './services/apiService';
 import { MediaItem, AppSettings, User } from './types';
-import { DEFAULT_USER, STORAGE_KEY_USER, COLORS, SHADOWS, RADIUS } from './constants';
+import { DEFAULT_USER, STORAGE_KEY_USER } from './constants';
 import { Plus } from 'lucide-react';
 import { MediaForm } from './components/Forms';
 import Swal from 'sweetalert2';
@@ -17,7 +17,6 @@ const App: React.FC = () => {
   const [view, setView] = useState<'GALLERY' | 'ADMIN'>('GALLERY');
   const [searchQuery, setSearchQuery] = useState("");
   const [showAddModal, setShowAddModal] = useState(false);
-  const [fabHover, setFabHover] = useState(false);
 
   // Initialize
   useEffect(() => {
@@ -61,7 +60,6 @@ const App: React.FC = () => {
       showCancelButton: true,
       confirmButtonText: 'Login',
       cancelButtonText: 'Batal',
-      confirmButtonColor: COLORS.primary,
       showLoaderOnConfirm: true,
       preConfirm: async (pin) => {
         try {
@@ -86,59 +84,16 @@ const App: React.FC = () => {
     setView('GALLERY');
   };
 
-  const styles = {
-    container: {
-        minHeight: '100vh',
-        fontFamily: '"Plus Jakarta Sans", sans-serif',
-        color: COLORS.slate800,
-        paddingBottom: '80px',
-        backgroundColor: COLORS.bgBody
-    },
-    loadingContainer: {
-        minHeight: '100vh',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        backgroundColor: COLORS.slate100
-    },
-    loader: {
-        width: '48px',
-        height: '48px',
-        borderRadius: '50%',
-        borderBottom: `4px solid ${COLORS.primary}`,
-        animation: 'spin 1s linear infinite'
-    },
-    fab: {
-        position: 'fixed' as const,
-        bottom: '32px',
-        right: '32px',
-        width: '64px',
-        height: '64px',
-        backgroundColor: fabHover ? COLORS.primary : COLORS.slate800,
-        color: 'white',
-        borderRadius: '16px',
-        boxShadow: SHADOWS.lg,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        border: 'none',
-        zIndex: 40,
-        cursor: 'pointer',
-        transition: 'all 0.3s ease',
-        transform: fabHover ? 'scale(1.1)' : 'scale(1)'
-    }
-  };
-
   if (loading) {
     return (
-      <div style={styles.loadingContainer}>
-        <div className="animate-spin" style={styles.loader}></div>
+      <div className="min-h-screen flex items-center justify-center bg-slate-100">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
       </div>
     );
   }
 
   return (
-    <div style={styles.container}>
+    <div className="min-h-screen font-sans text-slate-800 pb-20">
       <Navbar 
         user={user} 
         onLogin={handleLogin} 
@@ -171,12 +126,10 @@ const App: React.FC = () => {
       {user.role !== 'GUEST' && view === 'GALLERY' && (
         <button 
           onClick={() => setShowAddModal(true)}
-          style={styles.fab}
-          onMouseEnter={() => setFabHover(true)}
-          onMouseLeave={() => setFabHover(false)}
+          className="fixed bottom-8 right-8 w-16 h-16 bg-slate-800 text-white rounded-2xl shadow-xl flex items-center justify-center hover:scale-110 hover:bg-primary transition-all duration-300 z-40 group"
           title="Tambah Karya"
         >
-          <Plus size={32} style={{ transition: 'transform 0.3s', transform: fabHover ? 'rotate(90deg)' : 'none' }} />
+          <Plus size={32} className="group-hover:rotate-90 transition-transform duration-300" />
         </button>
       )}
 

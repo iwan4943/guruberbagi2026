@@ -1,7 +1,6 @@
 import React, { useRef, useState, useEffect } from 'react';
-import { X, Maximize } from 'lucide-react';
+import { X, Maximize, ExternalLink } from 'lucide-react';
 import { MediaItem } from '../types';
-import { COLORS } from '../constants';
 
 interface PreviewOverlayProps {
   item: MediaItem | null;
@@ -23,6 +22,7 @@ export const PreviewOverlay: React.FC<PreviewOverlayProps> = ({ item, onClose })
     if (!document.fullscreenElement) {
         containerRef.current?.requestFullscreen().catch(err => {
             console.error(err);
+            // Fallback
             window.open(item.linkContent || "", "_blank");
         });
         setFullscreen(true);
@@ -32,6 +32,7 @@ export const PreviewOverlay: React.FC<PreviewOverlayProps> = ({ item, onClose })
     }
   };
 
+  // Determine content type and source
   let contentSrc = "";
   let isHtml = false;
   let isExternal = false;
@@ -57,6 +58,7 @@ export const PreviewOverlay: React.FC<PreviewOverlayProps> = ({ item, onClose })
       }
   }
 
+  // Effect to handle blob URL cleanup
   useEffect(() => {
     return () => {
         if(blobUrl) URL.revokeObjectURL(blobUrl);
@@ -65,127 +67,48 @@ export const PreviewOverlay: React.FC<PreviewOverlayProps> = ({ item, onClose })
 
 
   if (isExternal) {
+      // For Gemini or direct external links that can't be embedded easily
       window.open(contentSrc, '_blank');
       onClose();
       return null;
   }
 
-  const styles = {
-    overlay: {
-        position: 'fixed' as const,
-        inset: 0,
-        zIndex: 50,
-        backgroundColor: '#000',
-        display: 'flex',
-        flexDirection: 'column' as const,
-    },
-    header: {
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        padding: '12px 16px',
-        backgroundColor: '#171717',
-        color: 'white',
-        transition: 'opacity 0.3s',
-        ...(fullscreen ? { 
-            position: 'absolute' as const, 
-            top: 0, 
-            width: '100%', 
-            zIndex: 10, 
-            backgroundColor: 'rgba(0,0,0,0.8)',
-            opacity: 0 // Hover handle by CSS normally, but simpler here
-        } : {})
-    },
-    title: {
-        fontWeight: 'bold',
-        fontSize: '1.125rem',
-        maxWidth: '60%',
-        whiteSpace: 'nowrap' as const,
-        overflow: 'hidden',
-        textOverflow: 'ellipsis',
-    },
-    btnFs: {
-        display: 'flex',
-        alignItems: 'center',
-        gap: '4px',
-        padding: '6px 12px',
-        borderRadius: '9999px',
-        border: '1px solid rgba(255,255,255,0.2)',
-        backgroundColor: 'transparent',
-        color: 'white',
-        fontSize: '0.75rem',
-        fontWeight: 'bold',
-        textTransform: 'uppercase' as const,
-        cursor: 'pointer',
-    },
-    btnClose: {
-        width: '32px',
-        height: '32px',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        borderRadius: '9999px',
-        backgroundColor: COLORS.red500,
-        color: 'white',
-        border: 'none',
-        cursor: 'pointer',
-        marginLeft: '12px',
-    },
-    frameContainer: {
-        flexGrow: 1,
-        backgroundColor: 'white',
-        position: 'relative' as const,
-        width: '100%',
-        height: '100%',
-    },
-    iframe: {
-        width: '100%',
-        height: '100%',
-        border: 'none',
-    },
-    floatingClose: {
-        position: 'fixed' as const,
-        top: '20px',
-        right: '20px',
-        zIndex: 20,
-        width: '48px',
-        height: '48px',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        borderRadius: '9999px',
-        backgroundColor: 'rgba(239, 68, 68, 0.9)',
-        color: 'white',
-        border: 'none',
-        cursor: 'pointer',
-        boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)',
-    }
-  };
-
   return (
-    <div style={styles.overlay} ref={containerRef}>
-      <div style={styles.header}>
-         <h3 style={styles.title}>{item.title}</h3>
-         <div style={{ display: 'flex', alignItems: 'center' }}>
-            <button onClick={toggleFullscreen} style={styles.btnFs}>
+    <div className="fixed inset-0 z-50 bg-black flex flex-col" ref={containerRef}>
+      {/* Header controls */}
+      <div className={`flex items-center justify-between px-4 py-3 bg-neutral-900 text-white transition-opacity duration-300 ${fullscreen ? 'opacity-0 hover:opacity-100 absolute top-0 w-full z-10 bg-black/80' : ''}`}>
+         <h3 className="font-bold text-lg truncate max-w-[60%]">{item.title}</h3>
+         <div className="flex items-center gap-3">
+            <button 
+                onClick={toggleFullscreen}
+                className="flex items-center gap-1 px-3 py-1.5 rounded-full border border-white/20 hover:bg-white/10 text-xs font-bold uppercase tracking-wider transition-colors"
+            >
                 <Maximize size={14} /> Fullscreen
             </button>
-            <button onClick={onClose} style={styles.btnClose}>
+            <button 
+                onClick={onClose}
+                className="w-8 h-8 flex items-center justify-center rounded-full bg-red-600 hover:bg-red-700 text-white transition-colors"
+            >
                 <X size={18} />
             </button>
          </div>
       </div>
 
+      {/* Floating exit button for fullscreen */}
       {fullscreen && (
-          <button onClick={() => { document.exitFullscreen(); setFullscreen(false); }} style={styles.floatingClose}>
+          <button 
+            onClick={() => { document.exitFullscreen(); setFullscreen(false); }}
+            className="fixed top-5 right-5 z-20 w-12 h-12 flex items-center justify-center rounded-full bg-red-600/90 text-white shadow-lg backdrop-blur hover:scale-110 transition-transform"
+          >
               <X size={24} />
           </button>
       )}
 
-      <div style={styles.frameContainer}>
+      {/* Content Frame */}
+      <div className="flex-grow bg-white relative w-full h-full">
          <iframe 
             src={isHtml ? blobUrl : contentSrc}
-            style={styles.iframe}
+            className="w-full h-full border-none"
             allowFullScreen
             allow="autoplay; encrypted-media; picture-in-picture"
             title="Preview"

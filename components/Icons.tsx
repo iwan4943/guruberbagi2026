@@ -23,36 +23,25 @@ export const Thumbnail: React.FC<ThumbnailProps> = ({ type, link }) => {
       <img 
         src={`https://img.youtube.com/vi/${ytId}/mqdefault.jpg`} 
         alt="Thumbnail" 
-        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+        className="w-full h-full object-cover"
         loading="lazy"
       />
     );
   }
 
   let Icon = Code;
-  let bgColor = "#475569"; // slate-600
+  let bgClass = "bg-slate-600";
   
-  if (t.includes("VIDEO")) { Icon = Play; bgColor = "#ef4444"; }
-  else if (t.includes("MODUL")) { Icon = BookOpen; bgColor = "#10b981"; }
-  else if (t.includes("GAME")) { Icon = Gamepad2; bgColor = "#8b5cf6"; }
-  else if (t.includes("KUIS")) { Icon = Timer; bgColor = "#f59e0b"; }
-  else if (t.includes("STORY") || t.includes("BUKU")) { Icon = BookMarked; bgColor = "#b45309"; }
+  if (t.includes("VIDEO")) { Icon = Play; bgClass = "bg-red-500"; }
+  else if (t.includes("MODUL")) { Icon = BookOpen; bgClass = "bg-emerald-500"; }
+  else if (t.includes("GAME")) { Icon = Gamepad2; bgClass = "bg-violet-500"; }
+  else if (t.includes("KUIS")) { Icon = Timer; bgClass = "bg-amber-500"; }
+  else if (t.includes("STORY") || t.includes("BUKU")) { Icon = BookMarked; bgClass = "bg-amber-700"; }
 
   return (
-    <div style={{
-      width: '100%', 
-      height: '100%', 
-      display: 'flex', 
-      flexDirection: 'column', 
-      alignItems: 'center', 
-      justifyContent: 'center', 
-      color: 'white',
-      backgroundColor: bgColor
-    }}>
-      <Icon size={48} style={{ marginBottom: '8px', opacity: 0.9 }} />
-      <span style={{ fontSize: '10px', fontWeight: 800, letterSpacing: '0.1em', textTransform: 'uppercase' }}>
-        {t}
-      </span>
+    <div className={`w-full h-full flex flex-col items-center justify-center text-white ${bgClass}`}>
+      <Icon size={48} className="mb-2 opacity-90" />
+      <span className="text-[10px] font-extrabold tracking-widest uppercase">{t}</span>
     </div>
   );
 };
