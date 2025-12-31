@@ -95,40 +95,27 @@ export const MediaForm: React.FC<MediaFormProps> = ({ user, settings, initialDat
             borderRadius: '16px',
             boxShadow: SHADOWS.lg,
             width: '100%',
-            maxWidth: '900px',
+            maxWidth: '600px',
             maxHeight: '90vh',
             overflowY: 'auto' as const,
             display: 'flex',
-            flexDirection: 'row' as const, // Might need wrap for mobile
-            flexWrap: 'wrap' as const,
-        },
-        formSide: {
-            flex: '3',
-            minWidth: '300px',
-            padding: '24px',
-            borderRight: `1px solid ${COLORS.slate100}`,
-        },
-        previewSide: {
-            flex: '2',
-            minWidth: '300px',
-            backgroundColor: COLORS.slate50,
-            padding: '24px',
-            display: 'flex',
             flexDirection: 'column' as const,
-            alignItems: 'center',
-            justifyContent: 'center',
         },
         header: {
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
-            marginBottom: '16px',
+            padding: '24px',
+            borderBottom: `1px solid ${COLORS.slate100}`,
         },
         title: {
             fontWeight: 800,
             color: COLORS.primary,
-            fontSize: '1.125rem',
+            fontSize: '1.25rem',
             margin: 0,
+        },
+        body: {
+            padding: '24px',
         },
         label: {
             display: 'block',
@@ -139,12 +126,12 @@ export const MediaForm: React.FC<MediaFormProps> = ({ user, settings, initialDat
         },
         input: {
             width: '100%',
-            padding: '8px',
+            padding: '10px',
             backgroundColor: COLORS.slate50,
             border: `1px solid ${COLORS.slate300}`,
             borderRadius: RADIUS.lg,
             fontSize: '0.875rem',
-            fontWeight: 'bold',
+            fontWeight: 600,
             color: COLORS.slate800,
             marginBottom: '16px',
         },
@@ -155,7 +142,8 @@ export const MediaForm: React.FC<MediaFormProps> = ({ user, settings, initialDat
         },
         select: {
             width: '100%',
-            padding: '8px',
+            padding: '10px',
+            backgroundColor: COLORS.white,
             border: `1px solid ${COLORS.slate300}`,
             borderRadius: RADIUS.lg,
             fontSize: '0.875rem',
@@ -171,7 +159,7 @@ export const MediaForm: React.FC<MediaFormProps> = ({ user, settings, initialDat
             justifyContent: 'space-between',
         },
         typeBtn: (active: boolean) => ({
-            padding: '6px 12px',
+            padding: '8px 12px',
             borderRadius: RADIUS.lg,
             fontSize: '0.75rem',
             fontWeight: 'bold',
@@ -179,18 +167,20 @@ export const MediaForm: React.FC<MediaFormProps> = ({ user, settings, initialDat
             backgroundColor: active ? COLORS.primary : 'white',
             color: active ? 'white' : COLORS.slate500,
             cursor: 'pointer',
+            flex: 1
         }),
         btnCancel: {
-            padding: '8px 16px',
+            padding: '10px 24px',
             borderRadius: RADIUS.full,
             color: COLORS.slate500,
             fontWeight: 'bold',
             backgroundColor: 'transparent',
             border: 'none',
             fontSize: '0.875rem',
+            cursor: 'pointer',
         },
         btnSave: {
-            padding: '8px 24px',
+            padding: '10px 32px',
             borderRadius: RADIUS.full,
             backgroundColor: COLORS.primary,
             color: 'white',
@@ -200,13 +190,14 @@ export const MediaForm: React.FC<MediaFormProps> = ({ user, settings, initialDat
             display: 'flex',
             alignItems: 'center',
             gap: '8px',
-            opacity: loading ? 0.5 : 1,
+            opacity: loading ? 0.7 : 1,
             fontSize: '0.875rem',
+            cursor: 'pointer',
         }
     };
 
     const renderSelect = (label: string, field: keyof typeof formData, options: string[] = []) => (
-        <div style={{ flex: 1, marginBottom: '12px' }}>
+        <div style={{ flex: 1, marginBottom: '16px' }}>
             <label style={styles.label}>{label}</label>
             <select 
                 style={styles.select}
@@ -224,17 +215,16 @@ export const MediaForm: React.FC<MediaFormProps> = ({ user, settings, initialDat
     return (
         <div style={styles.overlay}>
             <div style={styles.card}>
-                {/* Form Side */}
-                <div style={styles.formSide}>
-                    <div style={styles.header}>
-                        <h3 style={styles.title}>
-                            {initialData ? 'Edit Karya' : 'Bagikan Karya'}
-                        </h3>
-                        <button onClick={onClose} style={{ border: 'none', background: 'none', cursor: 'pointer', color: COLORS.slate400 }}>
-                            <X size={20}/>
-                        </button>
-                    </div>
+                <div style={styles.header}>
+                    <h3 style={styles.title}>
+                        {initialData ? 'Edit Karya' : 'Bagikan Karya'}
+                    </h3>
+                    <button onClick={onClose} style={{ border: 'none', background: 'none', cursor: 'pointer', color: COLORS.slate400 }}>
+                        <X size={20}/>
+                    </button>
+                </div>
 
+                <div style={styles.body}>
                     <form onSubmit={handleSubmit}>
                         <div style={{ marginBottom: '16px' }}>
                             <label style={styles.label}>Judul Karya <span style={{ color: COLORS.red500 }}>*</span></label>
@@ -244,6 +234,7 @@ export const MediaForm: React.FC<MediaFormProps> = ({ user, settings, initialDat
                                 value={formData.judul}
                                 onChange={(e) => setFormData({...formData, judul: e.target.value})}
                                 required
+                                placeholder="Tulis judul karya yang menarik..."
                             />
                         </div>
 
@@ -269,7 +260,7 @@ export const MediaForm: React.FC<MediaFormProps> = ({ user, settings, initialDat
                                         value={formData.kaihType}
                                         onChange={(e) => setFormData({...formData, kaihType: e.target.value})}
                                     >
-                                        <option value="">Pilih...</option>
+                                        <option value="">Pilih Karakter...</option>
                                         {settings?.kaih?.map(k => <option key={k} value={k}>{k}</option>)}
                                     </select>
                                 )}
@@ -283,9 +274,9 @@ export const MediaForm: React.FC<MediaFormProps> = ({ user, settings, initialDat
                         </div>
 
                         {/* Content Source */}
-                        <div style={{ marginBottom: '16px' }}>
-                            <label style={{...styles.label, marginBottom: '8px'}}>Tipe Konten</label>
-                            <div style={{ display: 'flex', gap: '8px', marginBottom: '8px' }}>
+                        <div style={{ marginBottom: '24px' }}>
+                            <label style={{...styles.label, marginBottom: '8px'}}>Tipe Konten Utama</label>
+                            <div style={{ display: 'flex', gap: '8px', marginBottom: '12px' }}>
                                 {['LINK', 'STORY', 'HTML'].map(t => (
                                     <button 
                                         type="button"
@@ -301,17 +292,26 @@ export const MediaForm: React.FC<MediaFormProps> = ({ user, settings, initialDat
                             </div>
 
                             {formData.sourceType === 'LINK' && (
-                                <input type="url" placeholder="Paste link Youtube / Drive / Quizizz..." style={styles.input} value={formData.link} onChange={e => setFormData({...formData, link: e.target.value})} />
+                                <div>
+                                    <input type="url" placeholder="Paste link Youtube / Drive / Quizizz..." style={styles.input} value={formData.link} onChange={e => setFormData({...formData, link: e.target.value})} />
+                                    <small style={{ color: COLORS.slate400, fontSize: '0.7rem' }}>Pastikan link dapat diakses publik (Anyone with the link)</small>
+                                </div>
                             )}
                             {formData.sourceType === 'STORY' && (
-                                <input type="url" placeholder="Paste link Gemini / Storybook..." style={{...styles.input, backgroundColor: '#eff6ff', borderColor: '#bfdbfe'}} value={formData.linkStory} onChange={e => setFormData({...formData, linkStory: e.target.value})} />
+                                <div>
+                                    <input type="url" placeholder="Paste link Gemini / Storybook..." style={{...styles.input, backgroundColor: '#eff6ff', borderColor: '#bfdbfe'}} value={formData.linkStory} onChange={e => setFormData({...formData, linkStory: e.target.value})} />
+                                    <small style={{ color: COLORS.primary, fontSize: '0.7rem' }}>Khusus untuk link hasil generate cerita Gemini</small>
+                                </div>
                             )}
                             {formData.sourceType === 'HTML' && (
-                                <textarea rows={3} placeholder="<iframe src='...'></iframe>" style={{...styles.input, fontFamily: 'monospace', fontSize: '0.75rem'}} value={formData.html} onChange={e => setFormData({...formData, html: e.target.value})} />
+                                <div>
+                                    <textarea rows={4} placeholder="<iframe src='...'></iframe>" style={{...styles.input, fontFamily: 'monospace', fontSize: '0.75rem'}} value={formData.html} onChange={e => setFormData({...formData, html: e.target.value})} />
+                                    <small style={{ color: COLORS.slate400, fontSize: '0.7rem' }}>Tempel kode embed HTML dari canva/wordwall/dll disini</small>
+                                </div>
                             )}
                         </div>
 
-                        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', marginTop: '24px' }}>
+                        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', borderTop: `1px solid ${COLORS.slate100}`, paddingTop: '16px' }}>
                             <button type="button" onClick={onClose} style={styles.btnCancel}>Batal</button>
                             <button disabled={loading} type="submit" style={styles.btnSave}>
                                 {loading && <RefreshCw className="animate-spin" size={16} />}
@@ -320,5 +320,7 @@ export const MediaForm: React.FC<MediaFormProps> = ({ user, settings, initialDat
                         </div>
                     </form>
                 </div>
-
-                {/* Preview Side
+            </div>
+        </div>
+    );
+};

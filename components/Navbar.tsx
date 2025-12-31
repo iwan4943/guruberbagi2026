@@ -100,6 +100,7 @@ export const Navbar: React.FC<NavbarProps> = ({ user, onLogin, onLogout, onSearc
       backgroundColor: '#fbbf24', // amber-400
       border: 'none',
       borderRadius: RADIUS.full,
+      cursor: 'pointer'
     },
     btnBack: {
       display: 'flex',
@@ -112,6 +113,7 @@ export const Navbar: React.FC<NavbarProps> = ({ user, onLogin, onLogout, onSearc
       border: `1px solid ${COLORS.slate300}`,
       backgroundColor: 'white',
       borderRadius: RADIUS.full,
+      cursor: 'pointer'
     },
     btnLogin: {
       display: 'flex',
@@ -124,6 +126,7 @@ export const Navbar: React.FC<NavbarProps> = ({ user, onLogin, onLogout, onSearc
       border: `1px solid ${COLORS.primary}`,
       backgroundColor: 'transparent',
       borderRadius: RADIUS.full,
+      cursor: 'pointer'
     },
     userSection: {
       display: 'flex',
