@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { User, MediaItem, AppSettings } from '../types';
 import { apiService } from '../services/apiService';
-import { X, Save, RefreshCw } from 'lucide-react';
+import { X, RefreshCw } from 'lucide-react';
+import { COLORS, RADIUS, SHADOWS } from '../constants';
 
 interface MediaFormProps {
     user: User;
@@ -21,7 +22,7 @@ export const MediaForm: React.FC<MediaFormProps> = ({ user, settings, initialDat
         sem: '',
         kaihType: '',
         isKaih: false,
-        sourceType: 'LINK', // LINK, STORY, HTML
+        sourceType: 'LINK',
         link: '',
         linkStory: '',
         html: '',
@@ -54,7 +55,7 @@ export const MediaForm: React.FC<MediaFormProps> = ({ user, settings, initialDat
         setLoading(true);
 
         const payload = {
-            id: initialData?.id, // If exists, it's edit
+            id: initialData?.id,
             user: user.name,
             school: user.school || "-",
             judul: formData.judul,
@@ -77,12 +78,138 @@ export const MediaForm: React.FC<MediaFormProps> = ({ user, settings, initialDat
         }
     };
 
-    // Helper to render select with "Lainnya" option (simplified for this demo to just selects)
+    const styles = {
+        overlay: {
+            position: 'fixed' as const,
+            inset: 0,
+            zIndex: 50,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            backgroundColor: 'rgba(0,0,0,0.5)',
+            backdropFilter: 'blur(4px)',
+            padding: '16px',
+        },
+        card: {
+            backgroundColor: 'white',
+            borderRadius: '16px',
+            boxShadow: SHADOWS.lg,
+            width: '100%',
+            maxWidth: '900px',
+            maxHeight: '90vh',
+            overflowY: 'auto' as const,
+            display: 'flex',
+            flexDirection: 'row' as const, // Might need wrap for mobile
+            flexWrap: 'wrap' as const,
+        },
+        formSide: {
+            flex: '3',
+            minWidth: '300px',
+            padding: '24px',
+            borderRight: `1px solid ${COLORS.slate100}`,
+        },
+        previewSide: {
+            flex: '2',
+            minWidth: '300px',
+            backgroundColor: COLORS.slate50,
+            padding: '24px',
+            display: 'flex',
+            flexDirection: 'column' as const,
+            alignItems: 'center',
+            justifyContent: 'center',
+        },
+        header: {
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginBottom: '16px',
+        },
+        title: {
+            fontWeight: 800,
+            color: COLORS.primary,
+            fontSize: '1.125rem',
+            margin: 0,
+        },
+        label: {
+            display: 'block',
+            fontSize: '0.75rem',
+            fontWeight: 'bold',
+            color: COLORS.slate500,
+            marginBottom: '4px',
+        },
+        input: {
+            width: '100%',
+            padding: '8px',
+            backgroundColor: COLORS.slate50,
+            border: `1px solid ${COLORS.slate300}`,
+            borderRadius: RADIUS.lg,
+            fontSize: '0.875rem',
+            fontWeight: 'bold',
+            color: COLORS.slate800,
+            marginBottom: '16px',
+        },
+        row: {
+            display: 'flex',
+            gap: '16px',
+            marginBottom: '4px'
+        },
+        select: {
+            width: '100%',
+            padding: '8px',
+            border: `1px solid ${COLORS.slate300}`,
+            borderRadius: RADIUS.lg,
+            fontSize: '0.875rem',
+        },
+        kaihBox: {
+            backgroundColor: '#fffbeb', // amber-50
+            border: '1px solid #fef3c7',
+            borderRadius: RADIUS.xl,
+            padding: '12px',
+            marginBottom: '16px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+        },
+        typeBtn: (active: boolean) => ({
+            padding: '6px 12px',
+            borderRadius: RADIUS.lg,
+            fontSize: '0.75rem',
+            fontWeight: 'bold',
+            border: `1px solid ${active ? COLORS.primary : COLORS.slate200}`,
+            backgroundColor: active ? COLORS.primary : 'white',
+            color: active ? 'white' : COLORS.slate500,
+            cursor: 'pointer',
+        }),
+        btnCancel: {
+            padding: '8px 16px',
+            borderRadius: RADIUS.full,
+            color: COLORS.slate500,
+            fontWeight: 'bold',
+            backgroundColor: 'transparent',
+            border: 'none',
+            fontSize: '0.875rem',
+        },
+        btnSave: {
+            padding: '8px 24px',
+            borderRadius: RADIUS.full,
+            backgroundColor: COLORS.primary,
+            color: 'white',
+            fontWeight: 'bold',
+            border: 'none',
+            boxShadow: SHADOWS.md,
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            opacity: loading ? 0.5 : 1,
+            fontSize: '0.875rem',
+        }
+    };
+
     const renderSelect = (label: string, field: keyof typeof formData, options: string[] = []) => (
-        <div className="mb-3">
-            <label className="block text-xs font-bold text-slate-500 mb-1">{label}</label>
+        <div style={{ flex: 1, marginBottom: '12px' }}>
+            <label style={styles.label}>{label}</label>
             <select 
-                className="w-full p-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-primary outline-none"
+                style={styles.select}
                 value={formData[field] as string}
                 onChange={(e) => setFormData({...formData, [field]: e.target.value})}
                 required
@@ -95,48 +222,50 @@ export const MediaForm: React.FC<MediaFormProps> = ({ user, settings, initialDat
     );
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
-            <div className="bg-white rounded-2xl shadow-xl w-full max-w-4xl max-h-[90vh] overflow-y-auto flex flex-col md:flex-row">
+        <div style={styles.overlay}>
+            <div style={styles.card}>
                 {/* Form Side */}
-                <div className="p-6 md:w-3/5 border-b md:border-b-0 md:border-r border-slate-100">
-                    <div className="flex justify-between items-center mb-4">
-                        <h3 className="font-extrabold text-primary text-lg">
+                <div style={styles.formSide}>
+                    <div style={styles.header}>
+                        <h3 style={styles.title}>
                             {initialData ? 'Edit Karya' : 'Bagikan Karya'}
                         </h3>
-                        <button onClick={onClose} className="text-slate-400 hover:text-red-500"><X size={20}/></button>
+                        <button onClick={onClose} style={{ border: 'none', background: 'none', cursor: 'pointer', color: COLORS.slate400 }}>
+                            <X size={20}/>
+                        </button>
                     </div>
 
                     <form onSubmit={handleSubmit}>
-                        <div className="mb-4">
-                            <label className="block text-xs font-bold text-slate-500 mb-1">Judul Karya <span className="text-red-500">*</span></label>
+                        <div style={{ marginBottom: '16px' }}>
+                            <label style={styles.label}>Judul Karya <span style={{ color: COLORS.red500 }}>*</span></label>
                             <input 
                                 type="text" 
-                                className="w-full p-2 bg-slate-50 border border-slate-300 rounded-lg text-sm font-bold text-slate-800 focus:bg-white focus:ring-2 focus:ring-primary outline-none"
+                                style={styles.input}
                                 value={formData.judul}
                                 onChange={(e) => setFormData({...formData, judul: e.target.value})}
                                 required
                             />
                         </div>
 
-                        <div className="grid grid-cols-2 gap-4">
+                        <div style={styles.row}>
                             {renderSelect('Mata Pelajaran', 'mapel', settings?.subjects)}
                             {renderSelect('Jenis Media', 'jenis', settings?.types)}
                         </div>
-                        <div className="grid grid-cols-2 gap-4">
+                        <div style={styles.row}>
                             {renderSelect('Fase / Kelas', 'fase', settings?.phases)}
                             {renderSelect('Semester', 'sem', settings?.semesters)}
                         </div>
 
                         {/* KAIH Section */}
-                        <div className="bg-amber-50 border border-amber-100 rounded-xl p-3 mb-4 flex items-center justify-between">
+                        <div style={styles.kaihBox}>
                             <div>
-                                <span className="block text-xs font-bold text-amber-800">Program KAIH?</span>
-                                <span className="text-[0.65rem] text-amber-600">Kebiasaan Anak Indonesia Hebat</span>
+                                <span style={{ display: 'block', fontSize: '0.75rem', fontWeight: 'bold', color: '#92400e' }}>Program KAIH?</span>
+                                <span style={{ fontSize: '0.65rem', color: '#d97706' }}>Kebiasaan Anak Indonesia Hebat</span>
                             </div>
-                            <div className="flex items-center gap-2">
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                                 {formData.isKaih && (
                                     <select 
-                                        className="text-xs p-1 border rounded bg-white"
+                                        style={{ fontSize: '0.75rem', padding: '4px', border: '1px solid #ddd', borderRadius: '4px' }}
                                         value={formData.kaihType}
                                         onChange={(e) => setFormData({...formData, kaihType: e.target.value})}
                                     >
@@ -146,7 +275,7 @@ export const MediaForm: React.FC<MediaFormProps> = ({ user, settings, initialDat
                                 )}
                                 <input 
                                     type="checkbox" 
-                                    className="w-5 h-5 accent-primary"
+                                    style={{ width: '20px', height: '20px' }}
                                     checked={formData.isKaih}
                                     onChange={(e) => setFormData({...formData, isKaih: e.target.checked})}
                                 />
@@ -154,15 +283,15 @@ export const MediaForm: React.FC<MediaFormProps> = ({ user, settings, initialDat
                         </div>
 
                         {/* Content Source */}
-                        <div className="mb-4">
-                            <label className="block text-xs font-bold text-slate-500 mb-2">Tipe Konten</label>
-                            <div className="flex gap-2 mb-2">
+                        <div style={{ marginBottom: '16px' }}>
+                            <label style={{...styles.label, marginBottom: '8px'}}>Tipe Konten</label>
+                            <div style={{ display: 'flex', gap: '8px', marginBottom: '8px' }}>
                                 {['LINK', 'STORY', 'HTML'].map(t => (
                                     <button 
                                         type="button"
                                         key={t}
                                         onClick={() => setFormData({...formData, sourceType: t})}
-                                        className={`px-3 py-1.5 rounded-lg text-xs font-bold border transition-colors ${formData.sourceType === t ? 'bg-primary text-white border-primary' : 'bg-white text-slate-500 border-slate-200'}`}
+                                        style={styles.typeBtn(formData.sourceType === t)}
                                     >
                                         {t === 'LINK' && '🔗 Link Umum'}
                                         {t === 'STORY' && '📖 Storybook'}
@@ -172,19 +301,19 @@ export const MediaForm: React.FC<MediaFormProps> = ({ user, settings, initialDat
                             </div>
 
                             {formData.sourceType === 'LINK' && (
-                                <input type="url" placeholder="Paste link Youtube / Drive / Quizizz..." className="w-full p-2 text-sm border rounded-lg" value={formData.link} onChange={e => setFormData({...formData, link: e.target.value})} />
+                                <input type="url" placeholder="Paste link Youtube / Drive / Quizizz..." style={styles.input} value={formData.link} onChange={e => setFormData({...formData, link: e.target.value})} />
                             )}
                             {formData.sourceType === 'STORY' && (
-                                <input type="url" placeholder="Paste link Gemini / Storybook..." className="w-full p-2 text-sm border border-blue-300 rounded-lg bg-blue-50" value={formData.linkStory} onChange={e => setFormData({...formData, linkStory: e.target.value})} />
+                                <input type="url" placeholder="Paste link Gemini / Storybook..." style={{...styles.input, backgroundColor: '#eff6ff', borderColor: '#bfdbfe'}} value={formData.linkStory} onChange={e => setFormData({...formData, linkStory: e.target.value})} />
                             )}
                             {formData.sourceType === 'HTML' && (
-                                <textarea rows={3} placeholder="<iframe src='...'></iframe>" className="w-full p-2 text-xs font-mono border rounded-lg bg-slate-50" value={formData.html} onChange={e => setFormData({...formData, html: e.target.value})} />
+                                <textarea rows={3} placeholder="<iframe src='...'></iframe>" style={{...styles.input, fontFamily: 'monospace', fontSize: '0.75rem'}} value={formData.html} onChange={e => setFormData({...formData, html: e.target.value})} />
                             )}
                         </div>
 
-                        <div className="flex justify-end gap-2 mt-6">
-                            <button type="button" onClick={onClose} className="px-4 py-2 rounded-full text-slate-500 font-bold hover:bg-slate-100 text-sm">Batal</button>
-                            <button disabled={loading} type="submit" className="px-6 py-2 rounded-full bg-primary text-white font-bold hover:bg-primary-dark shadow-md disabled:opacity-50 flex items-center gap-2">
+                        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', marginTop: '24px' }}>
+                            <button type="button" onClick={onClose} style={styles.btnCancel}>Batal</button>
+                            <button disabled={loading} type="submit" style={styles.btnSave}>
                                 {loading && <RefreshCw className="animate-spin" size={16} />}
                                 SIMPAN
                             </button>
@@ -192,23 +321,4 @@ export const MediaForm: React.FC<MediaFormProps> = ({ user, settings, initialDat
                     </form>
                 </div>
 
-                {/* Preview Side */}
-                <div className="md:w-2/5 bg-slate-50 p-6 flex flex-col items-center justify-center border-t md:border-t-0">
-                    <span className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Live Preview</span>
-                    <div className="w-full aspect-video bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden relative">
-                         <div className="absolute inset-0 flex items-center justify-center text-slate-300 text-sm font-bold">
-                             Preview Content
-                         </div>
-                         {/* Simple Preview Logic */}
-                         {formData.sourceType === 'LINK' && formData.link && formData.link.includes('youtube') && (
-                             <iframe src={`https://www.youtube.com/embed/${formData.link.split('v=')[1]}`} className="relative z-10 w-full h-full" />
-                         )}
-                    </div>
-                    <p className="text-center text-[0.65rem] text-slate-400 mt-4 px-4">
-                        Pastikan link yang anda masukkan dapat diakses publik (tidak diprivate).
-                    </p>
-                </div>
-            </div>
-        </div>
-    );
-};
+                {/* Preview Side
